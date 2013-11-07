@@ -1,0 +1,84 @@
+## Show the simulated data using R
+## 3Nov 2013
+
+library(ggplot2)
+library(reshape)
+
+## BIOMASS
+Biom <- read.table("tbiom.dat")
+#head(Biom[,2])
+plot(Biom[,2]~Biom[,1], type="l", col="red", lwd="2",
+ xlab="Year", ylab="Biomass")
+
+## BIOMASS (rate)
+BioR <- read.table("trbiom.dat")
+#head(BioR)
+plot(BioR[,2]~BioR[,1], type="l", col="red", lwd="2",
+ xlab="Year", ylab="Biomass(rate)")
+
+## RECRUITMENT
+Recr <- read.table("trec.dat")
+#head(Recr)
+plot(Recr[,2]~Recr[,1], type="l", col="blue", lwd="2",
+ xlab="Year", ylab="Recruitment")
+
+## CATCH 
+simout <- read.csv("catsim.out", skip=10, header=F)
+#head(simout,20)
+endl <- length(simout[,1])
+#Main header1
+freq <- seq(2, endl, by=5)
+freqd <- simout[freq,]
+freq2 <- as.numeric(unlist(strsplit(as.character(freqd), " ")))
+freq3 <- freq2[!is.na(freq2)]	#delete NA colmns 
+mm <- matrix(freq3, length(freqd), length(freq3)/length(freqd), byrow=T)
+md1 <- data.frame(mm)
+#Main header2
+freq <- seq(4, endl, by=5)
+freqd <- simout[freq,]
+freq2 <- as.numeric(unlist(strsplit(as.character(freqd), " ")))
+freq3 <- freq2[!is.na(freq2)]	#delete NA colmns 
+mm <- matrix(freq3, length(freqd), length(freq3)/length(freqd), byrow=T)
+md2 <- data.frame(mm)
+#Catch at length data
+freq <- seq(5, endl, by=5)
+freqd <- simout[freq,]
+freq2 <- as.numeric(unlist(strsplit(as.character(freqd), " ")))
+freq3 <- freq2[!is.na(freq2)]	#delete NA colmns 
+#freq3 <- freq2[freq2!=freq2[1]]	#delete "empty" colmns 
+mm <- matrix(freq3, length(freqd), length(freq3)/length(freqd), byrow=T)
+md3 <- data.frame(mm)
+#sum(md[1,])	#This is sample size(4000?)
+CaL <- cbind(md1,md2,md3)
+colnames(CaL) <- c("Year","Month","Week","Fishery","Catch","Effort",paste("b",1:length(md3[1,]),sep="")
+)
+summary(CaL)
+head(CaL)
+
+## CATCH -total catch
+attach(CaL)
+plot(0,0,xlim=c(min(CaL$Year),max(CaL$Year)), ylim=c(min(CaL$Catch),max(CaL$Catch)),
+ xlab="Year", ylab="Simulated Catch")
+points(CaL$Year[CaL$Fishery==1],CaL$Catch[CaL$Fishery==1],type="b",pch=1)
+points(CaL$Year[CaL$Fishery==2],CaL$Catch[CaL$Fishery==2],type="b",pch=2)
+# for ggplot
+temp1 <- data.frame(CaL$Year,CaL$Fishery,CaL$Catch)
+colnames(temp1) <- c("Year","variable","value")
+temp2 <- cast(temp1)
+temp2[is.na(temp2)] <- 0
+colnames(temp2) <- c("Year","F1catch","F2catch")
+h <- ggplot(temp2, aes(x=Year)) 
+#h + geom_area(aes(y=temp2$F1catch))
+#h + geom_area(aes(y=temp2$F2catch))
+h + geom_ribbon(aes(ymin=0, ymax=F1catch), fill="blue")+ geom_ribbon(aes(ymin=F1catch, ymax=F1catch+F2catch), fill="red")
+
+#temp1 <- data.frame(CaL$Year[CaL$Fishery==1],CaL$Catch[CaL$Fishery==1])
+#temp2 <- data.frame(CaL$Year[CaL$Fishery==2],CaL$Catch[CaL$Fishery==2])
+#colnames(temp1) <- c("Year","F1Catch")
+#colnames(temp2) <- c("Year","F2Catch") 
+#merge(temp1, temp2, by="Year", all=T)
+#colnames(temp1) <- c("Year","variable","value")
+
+## CATCH -catch at length
+
+
